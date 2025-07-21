@@ -27,12 +27,12 @@
         },
         "type": { 
           "type": "string",
-          "enum": ["lwpolyline", "line", "arc", "circle"]
+          "enum": ["polyline", "line", "arc", "circle"]
         }
       }
     },
     
-    "LWPolyline": {
+    "Polyline": {
       "allOf": [
         { "$ref": "#/definitions/GeometryBase" }
       ]
@@ -97,7 +97,7 @@
     
     "Geometry": {
       "oneOf": [
-        { "$ref": "#/definitions/LWPolyline" },
+        { "$ref": "#/definitions/Polyline" },
         { "$ref": "#/definitions/Line" },
         { "$ref": "#/definitions/Arc" },
         { "$ref": "#/definitions/Circle" }
