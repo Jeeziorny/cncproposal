@@ -1,0 +1,280 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CNC Cutting Application - Common Definitions",
+  "description": "Shared definitions for geometry, validation, and common data structures",
+  
+  "definitions": {
+    "Point": {
+      "type": "object",
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" }
+      }
+    },
+    
+    "Vertex": {
+      "type": "object",
+      "required": ["point"],
+      "properties": {
+        "point": { "$ref": "#/definitions/Point" },
+        "bulge": { 
+          "type": "number", 
+          "description": "Arc bulge factor for curved segments" 
+        }
+      }
+    },
+    
+    "GeometryBase": {
+      "type": "object",
+      "required": ["id", "type", "layer"],
+      "properties": {
+        "id": { 
+          "type": "string",
+          "description": "Unique identifier for the geometry object"
+        },
+        "type": { 
+          "type": "string",
+          "enum": ["lwpolyline", "line", "arc", "circle", "ellipse", "spline", "block", "point", "hatch"]
+        },
+        "layer": { 
+          "type": "string",
+          "description": "DXF layer name"
+        },
+        "color": { 
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 256,
+          "description": "AutoCAD color index"
+        },
+        "lineType": { 
+          "type": "string",
+          "description": "Line type name"
+        },
+        "lineWeight": { 
+          "type": "number",
+          "description": "Line weight in mm"
+        },
+        "visible": { 
+          "type": "boolean",
+          "default": true
+        },
+        "selected": { 
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    
+    "LWPolyline": {
+      "allOf": [
+        { "$ref": "#/definitions/GeometryBase" },
+        {
+          "type": "object",
+          "required": ["vertices"],
+          "properties": {
+            "type": { "const": "lwpolyline" },
+            "vertices": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/Vertex" },
+              "minItems": 2
+            },
+            "closed": { 
+              "type": "boolean",
+              "description": "Whether the polyline forms a closed shape"
+            },
+            "constantWidth": { "type": "number" }
+          }
+        }
+      ]
+    },
+    
+    "Line": {
+      "allOf": [
+        { "$ref": "#/definitions/GeometryBase" },
+        {
+          "type": "object",
+          "required": ["startPoint", "endPoint"],
+          "properties": {
+            "type": { "const": "line" },
+            "startPoint": { "$ref": "#/definitions/Point" },
+            "endPoint": { "$ref": "#/definitions/Point" }
+          }
+        }
+      ]
+    },
+    
+    "Arc": {
+      "allOf": [
+        { "$ref": "#/definitions/GeometryBase" },
+        {
+          "type": "object",
+          "required": ["center", "radius", "startAngle", "endAngle"],
+          "properties": {
+            "type": { "const": "arc" },
+            "center": { "$ref": "#/definitions/Point" },
+            "radius": { "type": "number", "minimum": 0 },
+            "startAngle": { 
+              "type": "number",
+              "description": "Start angle in degrees"
+            },
+            "endAngle": { 
+              "type": "number",
+              "description": "End angle in degrees"
+            }
+          }
+        }
+      ]
+    },
+    
+    "Circle": {
+      "allOf": [
+        { "$ref": "#/definitions/GeometryBase" },
+        {
+          "type": "object",
+          "required": ["center", "radius"],
+          "properties": {
+            "type": { "const": "circle" },
+            "center": { "$ref": "#/definitions/Point" },
+            "radius": { "type": "number", "minimum": 0 }
+          }
+        }
+      ]
+    },
+    
+    "Block": {
+      "allOf": [
+        { "$ref": "#/definitions/GeometryBase" },
+        {
+          "type": "object",
+          "required": ["insertionPoint"],
+          "properties": {
+            "type": { "const": "block" },
+            "insertionPoint": { "$ref": "#/definitions/Point" },
+            "scaleX": { "type": "number", "default": 1.0 },
+            "scaleY": { "type": "number", "default": 1.0 },
+            "rotation": { 
+              "type": "number",
+              "description": "Block rotation in degrees"
+            },
+            "blockName": { 
+              "type": "string",
+              "description": "Name of existing block template"
+            },
+            "presetType": {
+              "type": "string",
+              "enum": ["rectangle", "circle", "ellipse", "polygon", "custom", "dicing_pattern"],
+              "description": "Type of preset shape to generate"
+            },
+            "parameters": { 
+              "type": "object",
+              "description": "Parameters for preset shape generation"
+            },
+            "iconPath": { "type": "string" },
+            "description": { "type": "string" }
+          },
+          "oneOf": [
+            {
+              "description": "Reference to existing block",
+              "required": ["blockName"]
+            },
+            {
+              "description": "Parametric preset shape",
+              "required": ["presetType", "parameters"]
+            }
+          ]
+        }
+      ]
+    },
+    
+    "CuttingPath": {
+      "type": "object",
+      "required": ["id", "geometries"],
+      "properties": {
+        "id": { "type": "string" },
+        "geometries": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Array of geometry IDs that form this cutting path"
+        },
+        "startPoint": { "$ref": "#/definitions/Point" },
+        "endPoint": { "$ref": "#/definitions/Point" },
+        "bladeRotationPoints": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["position", "angle"],
+            "properties": {
+              "position": { "$ref": "#/definitions/Point" },
+              "angle": { 
+                "type": "number",
+                "minimum": -360,
+                "maximum": 360,
+                "description": "Blade rotation angle in degrees"
+              }
+            }
+          }
+        },
+        "cuttingDirection": {
+          "type": "string",
+          "enum": ["clockwise", "counterclockwise"]
+        }
+      }
+    },
+    
+    "ProjectMetadata": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "modifiedAt": { "type": "string", "format": "date-time" },
+        "units": { 
+          "type": "string", 
+          "enum": ["mm", "cm", "m", "inch", "feet"]
+        },
+        "bounds": {
+          "type": "object",
+          "required": ["minX", "minY", "maxX", "maxY"],
+          "properties": {
+            "minX": { "type": "number" },
+            "minY": { "type": "number" },
+            "maxX": { "type": "number" },
+            "maxY": { "type": "number" }
+          }
+        }
+      }
+    },
+    
+    "ValidationError": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "INVALID_DXF_FORMAT",
+            "MULTIPLE_FIGURES", 
+            "OPEN_FIGURE",
+            "INTERSECTING_LINES",
+            "OVERLAPPING_LINES",
+            "REDUNDANT_POINTS"
+          ]
+        },
+        "message": { "type": "string" },
+        "geometryId": { "type": "string" },
+        "position": { "$ref": "#/definitions/Point" }
+      }
+    },
+    
+    "Geometry": {
+      "oneOf": [
+        { "$ref": "#/definitions/LWPolyline" },
+        { "$ref": "#/definitions/Line" },
+        { "$ref": "#/definitions/Arc" },
+        { "$ref": "#/definitions/Circle" },
+        { "$ref": "#/definitions/Block" }
+      ]
+    }
+  }
+} 
