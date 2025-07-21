@@ -1,0 +1,107 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CNC Cutting Application - Common Definitions",
+  "description": "Shared definitions for geometry, validation, and common data structures",
+  
+  "definitions": {
+    "Point": {
+      "type": "object",
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "id": { 
+          "type": "string",
+          "description": "Unique identifier for the geometry object"
+        }
+      }
+    },
+    
+    "GeometryBase": {
+      "type": "object",
+      "required": ["id", "type", "layer"],
+      "properties": {
+        "id": { 
+          "type": "string",
+          "description": "Unique identifier for the geometry object"
+        },
+        "type": { 
+          "type": "string",
+          "enum": ["polyline", "line", "arc", "circle"]
+        }
+      }
+    },
+    
+    "Polyline": {
+      "allOf": [
+        { "$ref": "#/definitions/GeometryBase" }
+      ]
+    },
+    
+    "Line": {
+      "allOf": [
+        { "$ref": "#/definitions/GeometryBase" }
+      ]
+    },
+    
+    "Arc": {
+      "allOf": [
+        { "$ref": "#/definitions/GeometryBase" }
+      ]
+    },
+    
+    "Circle": {
+      "allOf": [
+        { "$ref": "#/definitions/GeometryBase" }
+      ]
+    },
+    
+    "Block": {
+      /* Blok będzie zawierał kilka geometrii i będzie najmniejszą strukturą, której nie będzie można rozgrupować */
+      /* blok ma mieć dokładnie 1 punkt wejścia i 1 punkt wyjścia (punkty te mogą być tym samym punktem) */
+      /* blade rotation points here? Or where? */
+      /* cutting direction? */
+    },
+
+    "Group": {
+      /* Grupa będzie zawierała 1..n bloków */
+      /* grupa ma mieć dokładnie 1 punkt wejścia i 1 punkt wyjścia (punkty te mogą być tym samym punktem) */
+      /* blade rotation points here? Or where? */
+      /* cutting direction? */
+    },
+    
+    "ProjectMetadata": {
+      /* to be validated */
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "modifiedAt": { "type": "string", "format": "date-time" },
+        "units": { 
+          "type": "string", 
+          "enum": ["mm", "cm", "m", "inch", "feet"]
+        },
+        "bounds": {
+          "type": "object",
+          "required": ["minX", "minY", "maxX", "maxY"],
+          "properties": {
+            "minX": { "type": "number" },
+            "minY": { "type": "number" },
+            "maxX": { "type": "number" },
+            "maxY": { "type": "number" }
+          }
+        }
+      }
+    },
+    
+    "Geometry": {
+      "oneOf": [
+        { "$ref": "#/definitions/Polyline" },
+        { "$ref": "#/definitions/Line" },
+        { "$ref": "#/definitions/Arc" },
+        { "$ref": "#/definitions/Circle" }
+      ]
+    }
+  }
+} 
